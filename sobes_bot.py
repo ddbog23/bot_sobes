@@ -1,32 +1,27 @@
-from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram import ReplyKeyboardMarkup, KeyboardButton, Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 import os
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN")  # Токен из переменной окружения
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    contact_button = KeyboardButton(text="📲 Отправить номер", request_contact=True)
-    keyboard = ReplyKeyboardMarkup([[contact_button]], resize_keyboard=True, one_time_keyboard=True)
-    await update.message.reply_text(
-        "Привет! Пожалуйста, нажми кнопку ниже, чтобы отправить свой номер телефона:",
-        reply_markup=keyboard
-    )
+    keyboard = [[KeyboardButton("Отправить номер", request_contact=True)]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("Привет! Отправь мне свой номер, пожалуйста.", reply_markup=reply_markup)
 
 async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    contact = update.message.contact
-    if contact:
-        await update.message.reply_text(f"Спасибо! Я получил твой номер: {contact.phone_number}")
-    else:
-        await update.message.reply_text("Что-то пошло не так.")
+    contact = update.message.contact.phone_number
+    await update.message.reply_text(f"Спасибо! Ты отправил номер: {contact}")
 
-async def main():
+def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.CONTACT, handle_contact))
+
     print("Бот запущен...")
-    await app.run_polling()
+    app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    main()
